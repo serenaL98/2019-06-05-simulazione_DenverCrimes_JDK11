@@ -3,6 +3,7 @@ package it.polito.tdp.denvercrimes;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.denvercrimes.model.Distretto;
 import it.polito.tdp.denvercrimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -22,13 +23,13 @@ public class FXMLController {
     private URL location;
 
     @FXML
-    private ComboBox<?> boxAnno;
+    private ComboBox<Integer> boxAnno;
 
     @FXML
-    private ComboBox<?> boxMese;
+    private ComboBox<Integer> boxMese;
 
     @FXML
-    private ComboBox<?> boxGiorno;
+    private ComboBox<Integer> boxGiorno;
 
     @FXML
     private Button btnCreaReteCittadina;
@@ -45,11 +46,62 @@ public class FXMLController {
     @FXML
     void doCreaReteCittadina(ActionEvent event) {
 
+    	Integer anno = this.boxAnno.getValue();
+    	if(anno == null) {
+    		txtResult.setText("Selezionare un anno!");
+    		return;
+    	}
+    	
+    	txtResult.setText("Crea grafo...");
+    	this.model.creaGrafo(anno);
+    	txtResult.appendText("\n\n#VERTICI: "+this.model.numeroVertici());
+    	txtResult.appendText("\n#ARCHI: "+this.model.numeroArchi()+"\n");
+    	
+    	for(Distretto di: this.model.elencoVertici()) {
+    		txtResult.appendText("\nDISTRETTI ADIACENTI A "+di.getCodice()+":\n"+this.model.distrettiAdiacenti(di));
+    	}
+    	
+    	this.btnSimula.setDisable(false);
+    	
     }
 
     @FXML
     void doSimula(ActionEvent event) {
 
+    	txtResult.clear();
+    	
+    	Integer anno = this.boxAnno.getValue();
+
+    	this.boxMese.getItems().addAll(this.model.prendiMese(anno));
+    	Integer mese = this.boxMese.getValue();
+    	if(mese == null) {
+    		txtResult.setText("Selezionare un mese!");
+    	}
+    	
+    	this.boxGiorno.getItems().addAll(this.model.prendiGiorno(anno, mese));
+    	Integer giorno = this.boxGiorno.getValue();
+    	if(giorno == null){
+    		txtResult.setText("Selezionare un giorno!");
+    	}
+    	
+    	
+    	String numero = this.txtN.getText();
+    	
+    	try {
+    		
+    		int N = Integer.parseInt(numero);
+    		
+    		if(N<11 && N>0) {
+    			this.model.simula(anno, mese, giorno, N);
+        		
+        		txtResult.appendText("SIMULA:\nCasi malgestiti = "+this.model.malGestiti());
+        		
+    		}
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Interire un numero intero positivo da 1 a 10.\n");
+    		return;
+    	}
     }
 
     @FXML
@@ -66,5 +118,7 @@ public class FXMLController {
 
 	public void setModel(Model model) {
 		this.model = model;
+		this.boxAnno.getItems().addAll(this.model.prendiAnni());
+		this.btnSimula.setDisable(true);
 	}
 }
